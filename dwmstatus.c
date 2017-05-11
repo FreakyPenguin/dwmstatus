@@ -1,4 +1,4 @@
-#define _BSD_SOURCE
+#define _DEFAULT_SOURCE
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -11,10 +11,6 @@
 #include <sys/wait.h>
 
 #include <X11/Xlib.h>
-
-char *tzargentina = "America/Buenos_Aires";
-char *tzutc = "UTC";
-char *tzberlin = "Europe/Berlin";
 
 static Display *dpy;
 
@@ -42,12 +38,6 @@ smprintf(char *fmt, ...)
 	return ret;
 }
 
-void
-settz(char *tzname)
-{
-	setenv("TZ", tzname, 1);
-}
-
 char *
 mktimes(char *fmt, char *tzname)
 {
@@ -56,7 +46,6 @@ mktimes(char *fmt, char *tzname)
 	struct tm *timtm;
 
 	memset(buf, 0, sizeof(buf));
-	settz(tzname);
 	tim = time(NULL);
 	timtm = localtime(&tim);
 	if (timtm == NULL) {
@@ -97,9 +86,7 @@ main(void)
 {
 	char *status;
 	char *avgs;
-	char *tmar;
-	char *tmutc;
-	char *tmbln;
+	char *tm;
 
 	if (!(dpy = XOpenDisplay(NULL))) {
 		fprintf(stderr, "dwmstatus: cannot open display.\n");
@@ -108,17 +95,12 @@ main(void)
 
 	for (;;sleep(90)) {
 		avgs = loadavg();
-		tmar = mktimes("%H:%M", tzargentina);
-		tmutc = mktimes("%H:%M", tzutc);
-		tmbln = mktimes("KW %W %a %d %b %H:%M %Z %Y", tzberlin);
+		tm = mktimes("%a %d %b %H:%M", NULL);
 
-		status = smprintf("L:%s A:%s U:%s %s",
-				avgs, tmar, tmutc, tmbln);
+		status = smprintf(" L:%s %s ", avgs, tm);
 		setstatus(status);
 		free(avgs);
-		free(tmar);
-		free(tmutc);
-		free(tmbln);
+		free(tm);
 		free(status);
 	}
 
